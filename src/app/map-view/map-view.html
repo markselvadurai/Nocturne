@@ -1,1 +1,16 @@
-<div #mapContainer class="map-container"></div>
+<div #mapContainer class="map-container"> </div>
+@if (sitesService.selectedSite(); as site) {
+  <aside class="panel">
+    <h2>{{ site.name }}</h2>
+    <p>{{ site.description }}</p>
+    <dl>
+        <dt>Bortle</dt>
+        <dd>
+            {{ site.bortle }}
+            @if (site.bortleNote) { <span class="note">{{ site.bortleNote }}</span> }
+        </dd>
+        <dt>Nearest town</dt><dd>{{ site.nearestTown.name }} — {{ site.nearestTown.driveDistanceKm }} km</dd>
+        <dt>Timezone</dt><dd>{{ site.timezone }}</dd>
+    </dl>
+  </aside>
+}
