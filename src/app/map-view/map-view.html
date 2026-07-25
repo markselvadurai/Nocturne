@@ -16,11 +16,18 @@
             <dt>Darkness </dt><dd>{{ night.darknessWindow.start.toFormat( 'HH:mm') }} - {{ night.darknessWindow.end.toFormat( 'HH:mm') }} &middot; {{ night.darkDuration }} </dd>
             <dt>Moon </dt> 
             <dd>
-              {{ night.moonIllumination }}% &middot; {{ night.moonOverlapMinutes }}
+              {{ night.moonIllumination }}% &middot; {{ night.moonOverlapDisplay }}
             </dd>
+            <dd>Cloud </dd>
+            @if (night.cloudDataAvailable) {
+               <dt>{{ night.cloudAvg }}% avg during dark window</dt>
+            } @else {
+              <dt>forecast unavailable — astronomy only</dt>
+            }
+            <dd>Score</dd><dt>{{ night.score }}/100</dt>
           }
           @else {
-            <dt>Tonight</dt><dd>no astronomical darkness tonight</dd>
+            <dd>Tonight</dd><dt>no astronomical darkness tonight</dt>
           }
         }
     </dl>

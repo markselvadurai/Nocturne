@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MapView } from './map-view/map-view';
+import { SitesService } from './services/sites';
+import { WeatherService } from './services/weather';
 
 @Component({
   selector: 'app-root',
@@ -9,5 +11,10 @@ import { MapView } from './map-view/map-view';
   styleUrl: './app.scss'
 })
 export class App {
+  private weather = inject(WeatherService);
+  private sitesService = inject(SitesService);
+  constructor() {
+    this.weather.loadAll(this.sitesService.sites());
+  }
   protected readonly title = signal('nocturne');
 }

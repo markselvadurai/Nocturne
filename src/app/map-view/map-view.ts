@@ -1,6 +1,7 @@
 import { Component, ElementRef, viewChild, AfterViewInit, OnDestroy, inject, signal, effect } from '@angular/core';
 import * as L from 'leaflet';
 import { SitesService } from '../services/sites';
+import { WeatherService } from '../services/weather';
 
 @Component({
   selector: 'app-map-view',

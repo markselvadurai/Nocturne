@@ -5,7 +5,7 @@ import { DateTime, Interval } from 'luxon';
 // ── Fixture: four hourly readings, midnight–3am, cloud 10/20/30/40 ──
 // One fixture, many windows: the function's behavior space is "which
 // readings does the interval catch," so we vary the window, not the data.
-const fixtureHours = [
+export const fixtureHours = [
   { time: DateTime.fromISO('2026-01-15T00:00', { zone: 'America/Toronto' }), cloudCover: 10 },
   { time: DateTime.fromISO('2026-01-15T01:00', { zone: 'America/Toronto' }), cloudCover: 20 },
   { time: DateTime.fromISO('2026-01-15T02:00', { zone: 'America/Toronto' }), cloudCover: 30 },
