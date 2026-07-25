@@ -26,7 +26,7 @@ export function computeScore(darknessHours: number, moonOverlapFraction: number,
     
     const g = 1 - MOON_PENALTY_WEIGHT * moonOverlapFraction * moonIlluminationFraction;
     if (!clouds.available) {
-        return {score: f*g*100, cloudDataAvailable: false}
+        return {score: Math.round(f*g*100), cloudDataAvailable: false}
     }
     const h = Math.pow(1 - clouds.avgCloud / 100, CLOUD_EXPONENT);
     return {score: Math.round(f*g*h*100), cloudDataAvailable: true}
