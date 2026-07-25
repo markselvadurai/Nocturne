@@ -11,6 +11,18 @@
         </dd>
         <dt>Nearest town</dt><dd>{{ site.nearestTown.name }} — {{ site.nearestTown.driveDistanceKm }} km</dd>
         <dt>Timezone</dt><dd>{{ site.timezone }}</dd>
+        @if (sitesService.nightInfo(); as night) {
+          @if (night.hasTrueDarkness) {
+            <dt>Darkness </dt><dd>{{ night.darknessWindow.start.toFormat( 'HH:mm') }} - {{ night.darknessWindow.end.toFormat( 'HH:mm') }} &middot; {{ night.darkDuration }} </dd>
+            <dt>Moon </dt> 
+            <dd>
+              {{ night.moonIllumination }}% &middot; {{ night.moonOverlapMinutes }}
+            </dd>
+          }
+          @else {
+            <dt>Tonight</dt><dd>no astronomical darkness tonight</dd>
+          }
+        }
     </dl>
   </aside>
 }
