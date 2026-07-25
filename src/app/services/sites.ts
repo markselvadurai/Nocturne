@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { Site } from '../models/site';
 import { SITES } from '../data/sites';
-import { getDarknessWindow, getMoonOverlap } from './astronomy';
+import { getDarknessWindow, getMoonOverlap } from '../engines/astronomy';
 import { DateTime, Duration } from 'luxon';
 
 export type NightInfo =
