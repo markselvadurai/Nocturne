@@ -11,7 +11,7 @@ export const SITES: Site[] = [
         },
         nearestTown: {
             driveDistanceKm: 16.2,
-            name: 'Manitowaning'
+            name: 'Manitouwaning'
         },
         timezone: 'America/Toronto',
         bortle: 2,

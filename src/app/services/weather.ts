@@ -24,8 +24,8 @@ export class WeatherService {
     }
 
     private _siteForecast = signal<Map<string, Forecast>>(new Map());
+    readonly siteForecast = this._siteForecast.asReadonly();
     
-
     private storeForecast(siteId: string, forecast: Forecast) {
         const next = new Map(this._siteForecast());
         next.set(siteId, forecast);

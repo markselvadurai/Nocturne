@@ -1,11 +1,14 @@
 import { Component, ElementRef, viewChild, AfterViewInit, OnDestroy, inject, signal, effect } from '@angular/core';
 import * as L from 'leaflet';
-import { SitesService } from '../services/sites';
+import { ScoredNight, SitesService } from '../services/sites';
 import { WeatherService } from '../services/weather';
+import { NightStrip } from '../night-strip/night-strip';
+import { DateTime } from 'luxon';
+
 
 @Component({
   selector: 'app-map-view',
-  imports: [],
+  imports: [NightStrip],
   templateUrl: './map-view.html',
   styleUrl: './map-view.scss',
 })

@@ -7,71 +7,65 @@ export type DarknessWindow =
         hasTrueDarkness: true;
         start: DateTime;
         end: DateTime;
+        dusk: DateTime;
+        dawn: DateTime;
     }
   | {
         hasTrueDarkness: false;
         start: null;
         end: null;
+        dusk: null;
+        dawn: null;
     };
 
-export type MoonOverlap =
-  | {
-      hasTrueDarkness: true;
+export type MoonOverlap = {
       overlapMinutes: number;
       overlapFraction: number;
       illuminationFraction: number;
-    }
-  | {
-      hasTrueDarkness: false;
-      overlapMinutes: null;
-      overlapFraction: null;
-      illuminationFraction: null;
+      segments: Interval<true>[];
     };
 
 export function getDarknessWindow(site: Site, date: Date) : DarknessWindow {
     const times = SunCalc.getTimes(date, site.coordinates.lat, site.coordinates.lng);
-
     const nextDay = new Date(date);
     nextDay.setDate(nextDay.getDate() + 1);
 
     const nextDayTimes = SunCalc.getTimes(nextDay, site.coordinates.lat, site.coordinates.lng)
     const nightStart = times.night;
     const nightEnd = nextDayTimes.nightEnd;
-    const hasTrueDarkness = nightStart != null && nightEnd != null
+    const dusk = times.dusk;
+    const dawn = nextDayTimes.dawn;
+    const hasTrueDarkness = nightStart != null && nightEnd != null && dusk != null && dawn != null
 
     if (!hasTrueDarkness) {
-        return { start: null, end: null, hasTrueDarkness: false };
+        return { start: null, end: null, hasTrueDarkness: false, dusk: null, dawn: null };
     }
 
     return {
         start: DateTime.fromJSDate(nightStart).setZone(site.timezone),
         end: DateTime.fromJSDate(nightEnd).setZone(site.timezone),
+        dusk: DateTime.fromJSDate(dusk).setZone(site.timezone),
+        dawn: DateTime.fromJSDate(dawn).setZone(site.timezone),
         hasTrueDarkness: true
     };
 }
 
-export function getMoonOverlap(site: Site, date: Date) : MoonOverlap {
-    const darkness = getDarknessWindow(site, date);
-
-    if (!darkness.hasTrueDarkness) {
-         return { overlapMinutes: null, overlapFraction: null, illuminationFraction: null, hasTrueDarkness: false };
-    }
-
-    let isUp = SunCalc.getMoonPosition(darkness.start.toJSDate(), site.coordinates.lat, site.coordinates.lng).altitude >= 0.133;
-    let segmentStart = darkness.start;
+export function getMoonOverlap(site: Site, window: Interval<true>) : MoonOverlap {
+    let isUp = SunCalc.getMoonPosition(window.start.toJSDate(), site.coordinates.lat, site.coordinates.lng).altitude >= 0.133;
+    let segmentStart = window.start;
     let overlapValue = 0;
-    const darknessInterval = Interval.fromDateTimes(darkness.start, darkness.end);
-    const day1 = SunCalc.getMoonTimes(date, site.coordinates.lat, site.coordinates.lng);
-    const nextDay = new Date(date);
+    const segments: Interval[] = []
+    const day1 = SunCalc.getMoonTimes(window.start.toJSDate(), site.coordinates.lat, site.coordinates.lng);
+    const nextDay = new Date(window.start.toJSDate());
     nextDay.setDate(nextDay.getDate() + 1);
     const day2 = SunCalc.getMoonTimes(nextDay, site.coordinates.lat, site.coordinates.lng);
     const tz = site.timezone;
-    const overlapEvents: DateTime[] = [];
+    const overlapEvents: DateTime<true>[] = [];
 
     const addIfInWindow = (d: Date | undefined) => {
-    if (!d) return;
-    const dt = DateTime.fromJSDate(d, { zone: tz });
-    if (darknessInterval.contains(dt)) overlapEvents.push(dt);
+        if (!d) return;
+        const dt = DateTime.fromJSDate(d, { zone: tz }) as DateTime<true>;
+        if (window.contains(dt)) overlapEvents.push(dt);
     };
 
     addIfInWindow(day1.rise);
@@ -83,17 +77,21 @@ export function getMoonOverlap(site: Site, date: Date) : MoonOverlap {
 
     for (const transition of overlapEvents) {
         if (isUp) {
+            segments.push(Interval.fromDateTimes(segmentStart, transition));
             overlapValue += transition.toMillis() - segmentStart.toMillis();
         }
         isUp = !isUp;
         segmentStart = transition;
     }
-    if (isUp) overlapValue = overlapValue + darkness.end.toMillis() - segmentStart.toMillis();
+    if (isUp) {
+        overlapValue = overlapValue + window.end.toMillis() - segmentStart.toMillis();
+        segments.push(Interval.fromDateTimes(segmentStart, window.end));
+    };
 
-    const windowMs = darknessInterval.length('millisecond');
+    const windowMs = window.length('millisecond');
 
     const overlapMinutes = overlapValue / 60000;
     const overlapFraction = ( overlapValue / windowMs );
 
-    return { overlapMinutes: overlapMinutes, overlapFraction: overlapFraction, illuminationFraction: SunCalc.getMoonIllumination(darkness.start.toJSDate()).fraction, hasTrueDarkness: true};
+    return { overlapMinutes, overlapFraction, illuminationFraction: SunCalc.getMoonIllumination(window.start.toJSDate()).fraction, segments};
 }
