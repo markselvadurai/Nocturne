@@ -30,11 +30,32 @@ export type NightInfo =
       moonIllumination: number;
       moonOverlapDisplay: string;
       score: number;
-      tier: 'clear' | 'marginal' | 'poor';
+      tier: Tier;
       cloudHours : { time: DateTime; cloudCover: number }[]
     } & CloudData);
 
   export type ScoredNight = Extract<NightInfo, { hasTrueDarkness: true }>;
+
+  type TonightScore =
+  | { hasTrueDarkness: true; score: number; tier: Tier; cloudDataAvailable: boolean }
+  | { hasTrueDarkness: false };
+
+  type Tier = 'clear' | 'marginal' | 'poor';
+  
+  const TIER_CLEAR = 65;
+  const TIER_MARGINAL = 35;
+
+
+  function tierFor(score: number) : Tier {
+    return(score >= TIER_CLEAR ? 'clear' : score >= TIER_MARGINAL ? 'marginal' : 'poor');
+  }
+
+  type WeekEntry = { date: Date; label: string } & (
+    | { hasTrueDarkness: true; score: number; tier: Tier; cloudDataAvailable: boolean }
+    | { hasTrueDarkness: false }
+  );
+
+  const dayLabels = ["M", "T", "W", "TH", "F", "S", "S"];
 
 @Injectable({ providedIn: 'root' })
 export class SitesService {
@@ -45,18 +66,109 @@ export class SitesService {
   readonly selectedSite = computed(() => 
     this.sites().find(s => s.id === this.selectedSiteId()) ?? null
   );
+  
   selectSite(id: string) {
     this._selectedSiteId.set(id);
+    this.selectNight(new Date());
   }
+  private _selectedNight = signal<Date>(new Date());
+  readonly selectedNight = this._selectedNight.asReadonly();
+  selectNight(date: Date) { this._selectedNight.set(date);}
+
+  readonly weekScores = computed<WeekEntry[]>(() => {
+    const site = this.selectedSite();
+    const entries: WeekEntry[] = [];
+    if (!site) return [];
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const date = DateTime.fromJSDate(d);
+      const label = dayLabels[date.weekday - 1];
+      const darkness = getDarknessWindow(site, d);
+
+      if (!darkness.hasTrueDarkness) {
+        entries.push({
+            date: d,
+            label,
+            hasTrueDarkness: false
+        });
+        continue;
+      }
+
+      const interval = Interval.fromDateTimes(darkness.start, darkness.end) as Interval<true>;
+      const moon = getMoonOverlap(site, interval);
+
+      const clouds = this.weather.cloudsFor(site, interval);
+
+      const result = computeScore(interval.length('hours'), moon.overlapFraction, moon.illuminationFraction, clouds);
+      const score = result.score;
+      entries.push({
+        date: d,
+        label,
+        hasTrueDarkness: true,
+        score,
+        tier: tierFor(score),
+        cloudDataAvailable: clouds.available
+      });
+    }
+    return entries;
+  })
+
+  readonly bestNight = computed<Date | null>(() => {
+  const scores = this.weekScores();
+
+  let bestDate: Date | null = null;
+  let bestScore = -Infinity;
+
+  for (const entry of scores) {
+    if (!entry.hasTrueDarkness) continue;
+    if (entry.score > bestScore) {
+      bestScore = entry.score;
+      bestDate = entry.date;
+    }
+  }
+  return bestDate;
+});
+// get all sites scores from tonight and mapping them to siteid - order: darkwindow->moon->clouds->score
+  readonly tonightScores = computed<Map<string, TonightScore>>(() => { 
+    const m = new Map<string, TonightScore>();
+    for (const site of this.sites()) {
+      const darkness = getDarknessWindow(site, new Date());
+      if (!darkness.hasTrueDarkness) {
+        m.set(site.id, {hasTrueDarkness: false})
+        continue;
+      };
+      const interval = Interval.fromDateTimes(darkness.start, darkness.end) as Interval<true>;
+      const moon = getMoonOverlap(site, interval);
+
+      const clouds = this.weather.cloudsFor(site, interval);
+
+      const result = computeScore(interval.length('hours'), moon.overlapFraction, moon.illuminationFraction, clouds);
+      const score = result.score;
+
+      m.set(site.id, {
+        hasTrueDarkness: true,
+        score,
+        tier: tierFor(score),
+        cloudDataAvailable: clouds.available
+      })
+    }
+    return m;
+  });
+
+  readonly selectedNightLabel = computed<string>(() => {
+    return DateTime.fromJSDate(this.selectedNight()).toFormat('ccc · LLL d');
+  });
 
   readonly nightInfo = computed<NightInfo | null>(() => {
     const site = this.selectedSite();
     if (!site) return null;
-    const TIER_CLEAR = 65;
-    const TIER_MARGINAL = 35;
+
     const forecast = this.weather.siteForecast().get(site.id);
 
-    const date = new Date(); // "tonight" = now; re-derives on selection only (v1 tradeoff)
+    const date = this.selectedNight();
     const darkness = getDarknessWindow(site, date);
 
     if (!darkness.hasTrueDarkness) return { hasTrueDarkness: false };
@@ -64,6 +176,7 @@ export class SitesService {
     const civilInterval = Interval.fromDateTimes(darkness.dusk, darkness.dawn) as Interval<true>;
 
     const clouds = this.weather.cloudsFor(site, interval);
+    // scratch — Wednesday diagnosis, in nightInfo right after the cloudsFor call:
     const cloudData: CloudData = clouds.available ? { cloudDataAvailable: true, cloudAvg: Math.round(clouds.avgCloud) } : { cloudDataAvailable: false, cloudAvg: null };
 
     const moon = getMoonOverlap(site, interval);
@@ -82,7 +195,7 @@ export class SitesService {
       moonIllumination: Math.round(moon.illuminationFraction * 100),
       moonOverlapDisplay,
       score,
-      tier: score >= TIER_CLEAR ? 'clear' : score >= TIER_MARGINAL ? 'marginal' : 'poor',
+      tier: tierFor(score),
        cloudHours: forecast?.hours.filter(h => civilInterval.contains(h.time)) ?? [],
       ...cloudData
     };

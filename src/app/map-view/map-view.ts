@@ -19,6 +19,18 @@ export class MapView implements AfterViewInit, OnDestroy {
   private map!: L.Map;
   markers = new Map<string, L.Marker>();
   mapReady = signal(false);
+  overlayOn = signal(false);
+  private overlayLayer = L.tileLayer(
+    'https://djlorenz.github.io/astronomy/image_tiles/tiles2024/tile_{z}_{x}_{y}.png',
+    { opacity: 0.25, tileSize: 1024, maxNativeZoom: 6, zoomOffset: -2}
+  );
+  private makeIcon(classes: string[]): L.DivIcon {
+    return L.divIcon({
+      className: classes.join(' '),
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+  }
 
   constructor() {
     effect(() => {
@@ -28,11 +40,38 @@ export class MapView implements AfterViewInit, OnDestroy {
       this.markers.clear();
       for (const site of this.sitesService.sites()) {
           const latlng = new L.LatLng(site.coordinates.lat, site.coordinates.lng);
-          const siteMark = new L.Marker(latlng);
+          const siteMark = new L.Marker(latlng, { icon: this.makeIcon(['site-marker']) });
           this.markers.set(site.id, siteMark);
           siteMark.addTo(this.map);
           siteMark.on('click', () => this.sitesService.selectSite(site.id));
         }
+    })
+
+    effect(() => {
+      if(!this.mapReady()) return;
+      for (const [id, marker] of this.markers) {
+        const tonightScore = this.sitesService.tonightScores().get(id);
+        if (!tonightScore) continue;
+        if (!tonightScore.hasTrueDarkness) {
+          marker.setIcon(this.makeIcon(['site-marker', 'site-marker--darkless']))
+        }
+        else {
+          const pending = !tonightScore.cloudDataAvailable;
+          const tier = tonightScore.tier;
+          const selected = this.sitesService.selectedSiteId() === id;
+
+          // array composition — every branch appends, nothing can overwrite:
+          const classes = ['site-marker', `site-marker--${tier}`];
+          if (pending) classes.push('site-marker--pending');
+          if (selected) classes.push('site-marker--selected');
+          marker.setIcon(this.makeIcon(classes));
+        }
+      }
+    })
+    
+    effect(() => {
+      if(!this.mapReady()) return;
+      this.overlayOn() ? this.overlayLayer.addTo(this.map) : this.overlayLayer.remove()
     })
   }
 

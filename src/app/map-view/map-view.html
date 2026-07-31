@@ -1,4 +1,7 @@
 <div #mapContainer class="map-container"></div>
+<button type="button" [class]="'overlay-toggle ' + (overlayOn() ? 'overlay-toggle--on' : 'overlay-toggle--off')" (click)="overlayOn.set(!overlayOn())">
+  light-pollution overlay{{ overlayOn() ? ' Toggle On' : ' Toggle Off'}}  ⬒
+</button>
 @if (sitesService.selectedSite(); as site) {
   <aside class="panel">
     <div class="header">
@@ -8,9 +11,14 @@
     @if (sitesService.nightInfo(); as night) {
       @if (night.hasTrueDarkness) {
         <div class="scoring">
-          <p>TONIGHT</p>
-          <span [class]="'score score--' + night.tier"
-            >{{ night.score }} {{ night.tier.toUpperCase() }}</span
+          <p>{{ sitesService.selectedNightLabel().toUpperCase() }}</p>
+          <span
+            class="score"
+            [class.score--marginal]="night.tier === 'marginal' && night.cloudDataAvailable"
+            [class.score--poor]="night.tier === 'poor' && night.cloudDataAvailable"
+            [class.score--clear]="night.tier === 'clear' && night.cloudDataAvailable"
+            [class.score--caveat]="!night.cloudDataAvailable"
+            >{{ night.score }} @if(!night.cloudDataAvailable) { ASTRONOMY ONLY } @else { {{ night.tier.toUpperCase() }} } </span
           >
         </div>
         <app-night-strip [night]="night" />
@@ -18,19 +26,49 @@
           <dt>Darkness</dt>
           <dd>
             {{ night.darknessWindow.start.toFormat('HH:mm') }} -
-            {{ night.darknessWindow.end.toFormat('HH:mm') }} &middot; <span class="subtext">{{ night.darkDuration }} true dark</span>
+            {{ night.darknessWindow.end.toFormat('HH:mm') }} &middot;
+            <span class="subtext">{{ night.darkDuration }} true dark</span>
           </dd>
           <dt>Moon</dt>
-          <dd>{{ night.moonIllumination }}% illum &middot; {{ night.moonOverlapDisplay }} <span class="subtext"> in the dark window</span></dd>
+          <dd>
+            {{ night.moonIllumination }}% illum &middot; {{ night.moonOverlapDisplay }}
+            <span class="subtext"> in the dark window</span>
+          </dd>
           <dt>Cloud</dt>
           @if (night.cloudDataAvailable) {
-            <dd>{{night.cloudAvg}}% <span class="subtext">avg during dark window</span></dd>
-          }
-          @else {
+            <dd>{{ night.cloudAvg }}% <span class="subtext">avg during dark window</span></dd>
+          } @else {
             <dd><span class="subtext">forecast unavailable — astronomy only</span></dd>
           }
-          
         </dl>
+        <div class="score-strip">
+          @for (day of sitesService.weekScores(); track day.date.getDate()) {
+            <button class="score-item" (click)="sitesService.selectNight(day.date)">
+              @if (!day.hasTrueDarkness) {
+                <div class="score-dot score-dot--darkless"></div>
+                <div>{{ day.label }}</div>
+              } @else {
+                <div
+                  class="score-dot"
+                  [class.score-dot--clear]="day.tier === 'clear'"
+                  [class.score-dot--marginal]="day.tier === 'marginal'"
+                  [class.score-dot--poor]="day.tier === 'poor'"
+                  [class.score-dot--best]="
+                    sitesService.bestNight()?.getTime() === day.date.getTime()
+                  "
+                ></div>
+                <div
+                  class="score-label"
+                  [class.score-label--active]="
+                    sitesService.selectedNight().toDateString() === day.date.toDateString()
+                  "
+                >
+                  {{ day.label }}
+                </div>
+              }
+            </button>
+          }
+        </div>
         <!-- <dt>Cloud</dt> -->
         <!-- @if (night.cloudDataAvailable) {
             <dd>{{ night.cloudAvg }}% avg during dark window</dd>
@@ -43,12 +81,17 @@
           <dt>Tonight</dt>
           <dd>no astronomical darkness tonight</dd> -->
       }
-      <div class="footer">Getting there &middot; {{ site.nearestTown.driveDistanceKm }} KM from {{ site.nearestTown.name }} &middot; {{ site.timezone }} </div>
+      <div class="footer">
+        Getting there &middot; {{ site.nearestTown.driveDistanceKm }} KM from
+        {{ site.nearestTown.name }} &middot; {{ site.timezone }}
+      </div>
       <details class="more">
         <summary>About this site</summary>
         <p class="note">{{ site.description }}</p>
-        @if (site.bortleNote) { <p class="note">{{ site.bortleNote }}</p> }
+        @if (site.bortleNote) {
+          <p class="note">{{ site.bortleNote }}</p>
+        }
       </details>
-  }
+    }
   </aside>
 }

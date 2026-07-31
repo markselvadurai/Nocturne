@@ -7,7 +7,25 @@
 .map-container {
   position: absolute;
   inset: 0;
-} // fills everything
+} // fills
+
+.overlay-toggle {
+  position: absolute;
+  background-color: var(--nadir);
+  z-index: 500;
+  top: 80px;
+  height: 46px;
+  width: 188px;
+  font-size: var(--t-desc);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--horizon);
+  color: var(--airglow);
+  border-radius: var(--s3);
+  margin-left: 10px;
+  text-align: left;
+  padding-top: 4px;
+}
 
 .panel {
   position: absolute;
@@ -75,7 +93,7 @@
     .score--caveat {
       border-color: var(--airglow);
       color: var(--airglow);
-    } // astronomy-only
+    }
   }
 
   .footer {
@@ -111,10 +129,10 @@
     content: '−';
   } // U+2212 minus, not a hyphen
 
-    .note {
-        color: var(--airglow);
-        font-size: var(--t-body);
-    }
+  .note {
+    color: var(--airglow);
+    font-size: var(--t-body);
+  }
 
   dl {
     display: grid;
@@ -143,4 +161,84 @@
       color: var(--airglow);
     }
   }
+  .score-strip {
+    height: 48px;
+    border-top: 1px solid var(--horizon);
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--s3);
+
+    .score-item {
+      background: none; border: none; padding: 0
+    }
+
+    .score-label {
+      font-family: var(--mono);
+      font-size: var(--t-desc);
+      color: var(--airglow);
+      text-align: center;
+      margin-top: var(--s1);
+      &--active {
+        color: var(--starlight);
+      }
+    }
+
+    .score-dot {
+      height: var(--s3);
+      width: var(--s3);
+      &--darkless {
+        border-radius: 50%;
+        background: var(--zenith);
+        border: 2px solid var(--airglow);
+      }
+      &--poor {
+        border-radius: 50%;
+        background: var(--zenith);
+        border: 2px solid var(--redshift);
+      }
+      &--marginal {
+        border-radius: 50%;
+        background: var(--zenith);
+        border: 2px solid var(--caution);
+      }
+      &--clear {
+        border-radius: 50%;
+        background: var(--zenith);
+        border: 2px solid var(--clear);
+      }
+      &--best {
+        box-shadow: 0 0 0 3px #7FD1A826;
+      }
+      
+    }
+  }
+  
+}
+
+:host ::ng-deep .site-marker {
+  border-radius: 50%;
+  background: var(--zenith);
+  border: 2px solid var(--airglow);
+}
+:host ::ng-deep .site-marker--clear {
+  border-color: var(--clear);
+}
+:host ::ng-deep .site-marker--marginal {
+  border-color: var(--caution);
+}
+:host ::ng-deep .site-marker--poor {
+  border-color: var(--poor);
+}
+:host ::ng-deep .site-marker--pending {
+  border-style: dashed;
+}
+:host ::ng-deep .site-marker--darkless {
+  border-style: dashed;
+  border-color: var(--horizon);
+  background: transparent;
+}
+:host ::ng-deep .site-marker--selected {
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--redshift) 15%, transparent),
+    0 0 0 2px var(--redshift);
 }

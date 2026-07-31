@@ -18,9 +18,7 @@ export class WeatherService {
     constructor() {
         const site = SITES.find(s => s.id === 'manitoulin-eco-park')!;
         const revived = this.loadFromCache(site);
-        console.log('>>> revived:', revived);
-        console.log('>>> zone:', revived?.hours[0].time.zoneName);
-        console.log('>>> stale entry fresh?', revived ? this.isFresh(revived) : 'no entry');
+
     }
 
     private _siteForecast = signal<Map<string, Forecast>>(new Map());
