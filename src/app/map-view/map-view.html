@@ -9,7 +9,7 @@
       <h2>{{ site.name }}</h2>
       <p class="subtitle">Bortle {{ site.bortle }} &middot; RASC DARK-SKY PRESERVE</p>
     </div>
-    @if (sitesService.nightInfo(); as night) {
+    @if (sitesService.darklessNight; as night) {
       @if (night.hasTrueDarkness) {
         <div class="scoring">
           <p>{{ sitesService.selectedNightLabel().toUpperCase() }}</p>
@@ -81,6 +81,8 @@
         } @else {
           <dt>Tonight</dt>
           <dd>no astronomical darkness tonight</dd> -->
+      } @else {
+        <div class="darkless">No astronomical darkness tonight</div>
       }
       <div class="footer">
         Getting there &middot; {{ site.nearestTown.driveDistanceKm }} KM from

@@ -47,6 +47,13 @@
   &__handle {
     display: none;
   }
+  .darkless {
+    font-size: var(--t-body);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--starlight);
+    margin-bottom: var(--s2);
+  }
   .header {
     font-size: var(--t-read);
     text-transform: uppercase;
