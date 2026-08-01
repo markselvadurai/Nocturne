@@ -162,8 +162,6 @@ export class SitesService {
     return DateTime.fromJSDate(this.selectedNight()).toFormat('ccc · LLL d');
   });
 
-  darklessNight: NightInfo = { hasTrueDarkness: false };
-
   readonly nightInfo = computed<NightInfo | null>(() => {
     const site = this.selectedSite();
     if (!site) return null;

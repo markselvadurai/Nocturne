@@ -9,7 +9,7 @@
       <h2>{{ site.name }}</h2>
       <p class="subtitle">Bortle {{ site.bortle }} &middot; RASC DARK-SKY PRESERVE</p>
     </div>
-    @if (sitesService.darklessNight; as night) {
+    @if (sitesService.nightInfo(); as night) {
       @if (night.hasTrueDarkness) {
         <div class="scoring">
           <p>{{ sitesService.selectedNightLabel().toUpperCase() }}</p>
