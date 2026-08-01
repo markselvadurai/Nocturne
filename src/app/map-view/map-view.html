@@ -3,7 +3,8 @@
   light-pollution overlay{{ overlayOn() ? ' Toggle On' : ' Toggle Off'}}  ⬒
 </button>
 @if (sitesService.selectedSite(); as site) {
-  <aside class="panel">
+  <aside class="panel" [class.panel--expanded]="sheetExpanded()">
+    <button type="button" class="panel__handle" (click)="sheetExpanded.set(!sheetExpanded())" aria-label="Expand panel">&macr;&macr;</button>
     <div class="header">
       <h2>{{ site.name }}</h2>
       <p class="subtitle">Bortle {{ site.bortle }} &middot; RASC DARK-SKY PRESERVE</p>

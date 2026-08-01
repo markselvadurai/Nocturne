@@ -20,6 +20,7 @@ export class MapView implements AfterViewInit, OnDestroy {
   markers = new Map<string, L.Marker>();
   mapReady = signal(false);
   overlayOn = signal(false);
+  sheetExpanded = signal(false);
   private overlayLayer = L.tileLayer(
     'https://djlorenz.github.io/astronomy/image_tiles/tiles2024/tile_{z}_{x}_{y}.png',
     { opacity: 0.25, tileSize: 1024, maxNativeZoom: 6, zoomOffset: -2}
@@ -77,7 +78,7 @@ export class MapView implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     this.map = new L.Map(this.mapContainer().nativeElement, {
-      zoom: 9,
+      zoom: 8,
       center: [43.65, -79.38]
     });
     const tiles = new L.TileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {

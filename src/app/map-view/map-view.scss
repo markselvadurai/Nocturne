@@ -25,6 +25,10 @@
   margin-left: 10px;
   text-align: left;
   padding-top: 4px;
+  @media screen and (max-width: 640px) {
+    top: 0px;
+    margin: 10px;
+  }
 }
 
 .panel {
@@ -40,7 +44,9 @@
   border: 1px solid var(--horizon);
   border-radius: var(--s3);
   padding: var(--s4);
-
+  &__handle {
+    display: none;
+  }
   .header {
     font-size: var(--t-read);
     text-transform: uppercase;
@@ -212,8 +218,42 @@
       
     }
   }
-  
 }
+
+@media screen and (max-width: 640px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    overflow-y: auto;
+    transition: height .2s ease;
+    height: 40dvh;
+  }
+  .panel--expanded { 
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    overflow-y: auto;
+    transition: height .2s ease;
+    height: 75dvh ;
+   }
+   .panel__handle {
+    display: block;
+    background: none;
+    border: 1px solid var(--nadir);
+    color: var(--airglow);
+    font-size: larger;
+    letter-spacing: 0;
+   }
+  :host ::ng-deep .leaflet-control-zoom {
+    display: none;
+  }
+}
+
 
 :host ::ng-deep .site-marker {
   border-radius: 50%;

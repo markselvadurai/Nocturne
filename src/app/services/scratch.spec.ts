@@ -46,10 +46,4 @@ function isFresh(forecast: Forecast): boolean {
 // ── The gauntlet ──
 it('scratch: storage round-trip verdict', () => {
   const revived = fromStorage(JSON.parse(JSON.stringify(toStorage(original))));
-
-  console.log('>>> instant equal:', original.hours[0].time.toMillis() === revived.hours[0].time.toMillis());
-  console.log('>>> zone before/after:', original.hours[0].time.zoneName, '→', revived.hours[0].time.zoneName);
-  console.log('>>> format before/after:', original.hours[0].time.toFormat('HH:mm'), '→', revived.hours[0].time.toFormat('HH:mm'));
-    console.log('>>> diffNow raw:', revived?.savedAt.diffNow('hours').hours);  // observe the sign first
-    console.log('>>> stale entry fresh?', revived ? isFresh(revived) : 'no entry');
 });
