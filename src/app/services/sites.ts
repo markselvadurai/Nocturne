@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Site } from '../models/site';
 import { SITES } from '../data/sites';
-import { getDarknessWindow, getMoonOverlap } from '../engines/astronomy';
+import { getDarknessWindow, getMoonOverlap, siteToday } from '../engines/astronomy';
 import { DateTime, Duration, Interval } from 'luxon';
 import { WeatherService } from './weather';
 import { computeScore, NightScore } from '../engines/scorer';
@@ -69,7 +69,8 @@ export class SitesService {
   
   selectSite(id: string) {
     this._selectedSiteId.set(id);
-    this.selectNight(new Date());
+    const site = this.sites().find(s => s.id === id);
+    this.selectNight(site ? siteToday(site).toJSDate() : new Date());
   }
   private _selectedNight = signal<Date>(new Date());
   readonly selectedNight = this._selectedNight.asReadonly();
@@ -79,12 +80,10 @@ export class SitesService {
     const site = this.selectedSite();
     const entries: WeekEntry[] = [];
     if (!site) return [];
-    const today = new Date();
-    today.setHours(12, 0, 0, 0);
+    const start = siteToday(site);
     for (let i = 0; i < 7; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const date = DateTime.fromJSDate(d);
+      const date = start.plus({ days: i });
+      const d = date.toJSDate();
       const label = dayLabels[date.weekday - 1];
       const darkness = getDarknessWindow(site, d);
 
@@ -159,7 +158,9 @@ export class SitesService {
   });
 
   readonly selectedNightLabel = computed<string>(() => {
-    return DateTime.fromJSDate(this.selectedNight()).toFormat('ccc · LLL d');
+    const site = this.selectedSite();
+    const dt = DateTime.fromJSDate(this.selectedNight());
+    return (site ? dt.setZone(site.timezone) : dt).toFormat('ccc · LLL d');
   });
 
   readonly nightInfo = computed<NightInfo | null>(() => {

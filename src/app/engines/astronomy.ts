@@ -25,10 +25,31 @@ export type MoonOverlap = {
       segments: Interval<true>[];
     };
 
+/** Moon semidiameter + refraction constants, matching suncalc's own rise/set test. */
+const EARTH_RADIUS_KM = 6378.14;
+const REFRACTION_DEG = 0.09;
+
+/** The moon is up once its upper limb clears the horizon — centre altitude ≈ −0.35°. */
+function isMoonUp(site: Site, at: Date): boolean {
+    const p = SunCalc.getMoonPosition(at, site.coordinates.lat, site.coordinates.lng);
+    const semidiameter = 0.2725 * Math.asin(EARTH_RADIUS_KM / p.distance) * (180 / Math.PI);
+    return p.altitude + semidiameter + REFRACTION_DEG >= 0;
+}
+
+/** Noon on the site's current calendar day — the anchor for "tonight" *there*, not here. */
+export function siteToday(site: Site, now: DateTime = DateTime.now()): DateTime {
+    return now.setZone(site.timezone).set({ hour: 12, minute: 0, second: 0, millisecond: 0 });
+}
+
 export function getDarknessWindow(site: Site, date: Date) : DarknessWindow {
-    const times = SunCalc.getTimes(date, site.coordinates.lat, site.coordinates.lng);
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
+    // Anchor to noon at the site: suncalc picks a night by the date's UTC day,
+    // so an evening instant would name tomorrow's.
+    const anchor = DateTime.fromJSDate(date)
+        .setZone(site.timezone)
+        .set({ hour: 12, minute: 0, second: 0, millisecond: 0 });
+
+    const times = SunCalc.getTimes(anchor.toJSDate(), site.coordinates.lat, site.coordinates.lng);
+    const nextDay = anchor.plus({ days: 1 }).toJSDate();
 
     const nextDayTimes = SunCalc.getTimes(nextDay, site.coordinates.lat, site.coordinates.lng)
     const nightStart = times.night;
@@ -51,7 +72,7 @@ export function getDarknessWindow(site: Site, date: Date) : DarknessWindow {
 }
 
 export function getMoonOverlap(site: Site, window: Interval<true>) : MoonOverlap {
-    let isUp = SunCalc.getMoonPosition(window.start.toJSDate(), site.coordinates.lat, site.coordinates.lng).altitude >= 0.133;
+    let isUp = isMoonUp(site, window.start.toJSDate());
     let segmentStart = window.start;
     let overlapValue = 0;
     const segments: Interval[] = []

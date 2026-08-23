@@ -1,12 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { MapView } from './map-view/map-view';
 import { SitesService } from './services/sites';
 import { WeatherService } from './services/weather';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, MapView],
+  imports: [MapView],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

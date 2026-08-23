@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { getDarknessWindow, getMoonOverlap } from './astronomy';
+import * as SunCalc from 'suncalc';
+import { getDarknessWindow, getMoonOverlap, siteToday } from './astronomy';
 import { Site } from '../models/site';
 import { DateTime, Interval } from 'luxon';
 
@@ -82,6 +83,46 @@ describe('getDarknessWindow', () => {
     expect(w.dusk).toBeNull();
     expect(w.dawn).toBeNull();
   });
+
+  // ── LAYER 3: regression — the UTC day-seam ──
+
+  // Date.UTC, not a local-time constructor: that means a different instant per
+  // machine and would pass on a UTC runner while the bug was live.
+
+  it('resolves the same night from any time of day', () => {
+    const noon = new Date(Date.UTC(2026, 7, 22, 16, 0)); // 12:00 EDT Aug 22
+    const evening = new Date(Date.UTC(2026, 7, 23, 1, 0)); // 21:00 EDT Aug 22
+
+    const fromNoon = getDarknessWindow(manitoulin, noon);
+    const fromEvening = getDarknessWindow(manitoulin, evening);
+    if (!fromNoon.hasTrueDarkness || !fromEvening.hasTrueDarkness) {
+      throw new Error('expected darkness');
+    }
+
+    expect(fromEvening.start.toISO()).toBe(fromNoon.start.toISO());
+    expect(fromEvening.dawn.toISO()).toBe(fromNoon.dawn.toISO());
+  });
+
+  // Consistency alone would pass with both answers wrong, so pin the real night.
+  it('names the night that begins on the given local date', () => {
+    const evening = new Date(Date.UTC(2026, 7, 23, 1, 0)); // 21:00 EDT Aug 22
+    const w = getDarknessWindow(manitoulin, evening);
+    if (!w.hasTrueDarkness) throw new Error('expected darkness');
+
+    expect(w.start.toISODate()).toBe('2026-08-22');
+    expect(w.end.toISODate()).toBe('2026-08-23');
+  });
+
+  // Toronto springs forward 2027-03-14. Guards the seam on a transition day; it
+  // does not discriminate days:1 from hours:24 (mutation-checked, both pass).
+  it('resolves the correct night on a DST transition day', () => {
+    const evening = new Date(Date.UTC(2027, 2, 15, 1, 0)); // 21:00 EDT Mar 14
+    const w = getDarknessWindow(manitoulin, evening);
+    if (!w.hasTrueDarkness) throw new Error('expected darkness');
+
+    expect(w.start.toISODate()).toBe('2027-03-14');
+    expect(w.end.toISODate()).toBe('2027-03-15');
+  });
 });
 
 /** Author a window on a given night, in the site's zone. */
@@ -149,4 +190,64 @@ describe('getMoonOverlap', () => {
     const w = getMoonOverlap(manitoulin, window);
     expect(Math.abs(w.overlapMinutes - 341)).toBeLessThanOrEqual(5);
   });
+
+  // ── LAYER 3: the initial-state probe ──
+
+  // A probe at +0.133° disagrees with suncalc's own rise/set (≈ −0.35°) across a
+  // ~0.48° band, inverting the parity of the whole walk.
+  it('counts a moon that has already risen at window start', () => {
+    // Moonrise ~21:58 EDT; at 22:00 the centre is −0.07° but the limb is up.
+    // No rise/set falls inside the window, so the result rests on the probe.
+    const w = getMoonOverlap(manitoulin, nightWindow('2026-07-31T22:00', '2026-08-01T01:00'));
+    expect(w.overlapFraction).toBeCloseTo(1);
+    expect(w.overlapMinutes).toBeCloseTo(180);
+  });
+
+  // Pins the probe to suncalc's own rise/set rather than to a magic number: 30s
+  // after moonrise the centre is still 0.26° down but the limb is up, so this
+  // offset also discriminates the semidiameter and refraction terms.
+  it('agrees with suncalc rise/set moments after moonrise', () => {
+    const times = SunCalc.getMoonTimes(
+      new Date(Date.UTC(2026, 7, 1, 12, 0)),
+      manitoulin.coordinates.lat,
+      manitoulin.coordinates.lng,
+    );
+    if (!times.rise) throw new Error('expected a moonrise');
+
+    const start = DateTime.fromJSDate(times.rise, { zone: manitoulin.timezone }).plus({
+      seconds: 30,
+    }) as DateTime<true>;
+    const w = Interval.fromDateTimes(start, start.plus({ hours: 2 })) as Interval<true>;
+
+    expect(getMoonOverlap(manitoulin, w).overlapFraction).toBeCloseTo(1);
+  });
+
+  // segments is what the Night Strip renders; nothing else asserts it.
+  it('emits one segment spanning a window the moon is up for throughout', () => {
+    const window = nightWindow('2026-07-31T22:00', '2026-08-01T01:00');
+    const w = getMoonOverlap(manitoulin, window);
+    expect(w.segments).toHaveLength(1);
+    expect(w.segments[0].start.toISO()).toBe(window.start.toISO());
+    expect(w.segments[0].end.toISO()).toBe(window.end.toISO());
+  });
+});
+
+describe('siteToday', () => {
+
+  it('resolves the site calendar day, not the caller clock', () => {
+    // 03:00 UTC on Aug 22 is still Aug 21 in Toronto — 23:00 EDT, mid-session.
+    const now = DateTime.fromISO('2026-08-22T03:00', { zone: 'utc' }) as DateTime<true>;
+    expect(siteToday(manitoulin, now).toISODate()).toBe('2026-08-21');
+    expect(siteToday(manitoulin, now).hour).toBe(12);
+  });
+
+  // The week row is built from this, so a reader in Tokyo must get the same
+  // seven Ontario nights as a reader in Toronto.
+  it.each(['UTC', 'Asia/Tokyo', 'Pacific/Auckland', 'America/Vancouver'])(
+    'gives the same site day when called from %s',
+    (callerZone) => {
+      const now = DateTime.fromISO('2026-08-22T16:00Z', { zone: callerZone }) as DateTime<true>;
+      expect(siteToday(manitoulin, now).toISODate()).toBe('2026-08-22');
+    },
+  );
 });

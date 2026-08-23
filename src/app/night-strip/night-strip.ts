@@ -1,6 +1,6 @@
-import { Component, computed, input, OnInit } from '@angular/core';
-import { DateTime, Duration, Interval } from 'luxon';
-import { NightInfo, ScoredNight } from '../services/sites';
+import { Component, computed, input } from '@angular/core';
+import { DateTime } from 'luxon';
+import { ScoredNight } from '../services/sites';
 
 @Component({
   selector: 'app-night-strip',
