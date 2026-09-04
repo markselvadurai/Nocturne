@@ -81,7 +81,7 @@ export class MapView implements AfterViewInit, OnDestroy {
       zoom: 8,
       center: [43.65, -79.38]
     });
-    const tiles = new L.TileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+    const tiles = new L.TileLayer('https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=cb1_2xh3_1_f6dc083e0556797a1af5af4d', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 20
     })
