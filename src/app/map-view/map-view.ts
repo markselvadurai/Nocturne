@@ -81,10 +81,9 @@ export class MapView implements AfterViewInit, OnDestroy {
       zoom: 8,
       center: [43.65, -79.38]
     });
-    // Esri's endpoint is {z}/{y}/{x} — y before x, unlike the usual slippy-map order
-    const tiles = new L.TileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, DeLorme, NAVTEQ',
-      maxZoom: 16
+    const tiles = new L.TileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      maxZoom: 20
     })
     tiles.addTo(this.map);
     this.mapReady.set(true);
