@@ -29,7 +29,9 @@ export class MapView implements AfterViewInit, OnDestroy {
   sheetExpanded = signal(false);
   private overlayLayer = L.tileLayer(
     'https://djlorenz.github.io/astronomy/image_tiles/tiles2024/tile_{z}_{x}_{y}.png',
-    { opacity: 0.25, tileSize: 1024, maxNativeZoom: 6, zoomOffset: -2}
+    { opacity: 0.25, tileSize: 1024, maxNativeZoom: 6, zoomOffset: -2,
+      attribution: 'Light pollution &copy; <a href="https://djlorenz.github.io/astronomy/lp/">D. Lorenz 2024 atlas</a>'
+    }
   );
   private makeIcon(classes: string[]): L.DivIcon {
     return L.divIcon({

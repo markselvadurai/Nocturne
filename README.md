@@ -6,7 +6,7 @@ Live at **[nocturne.markselvadurai.com](https://nocturne.markselvadurai.com)**
 
 Nocturne is a stargazing planner for Ontario's dark-sky sites. It computes tonight's true-darkness window, moon interference, and cloud cover for seven curated locations, fuses them into a single 0–100 score, and answers the only question that matters before a two-hour drive: *go, or wait for Thursday.*
 
-<!-- SCREENSHOT: tinted map, overlay on — the Golden Horseshoe glow with markers in the dark gaps -->
+![Nocturne's map with the light-pollution overlay on — the Golden Horseshoe glows while the site markers sit in the dark voids north of it](screenshots/map-overlay.png)
 
 No ads, no accounts, no login. One screen, one answer.
 
@@ -18,7 +18,7 @@ Every site marker is tinted with **tonight's score tier** before you click anyth
 
 A light-pollution overlay (David Lorenz's 2024 atlas) can be toggled over the basemap — the before/after makes the *why* of dark-sky travel visible: the Golden Horseshoe burns, and every curated site sits deliberately in the dark voids north of it.
 
-<!-- SCREENSHOT: panel with strip, a real night -->
+![The observing panel for Torrance Barrens: the verdict pill, the Night Strip, the darkness/moon/cloud readouts behind the score, and the 7-night dot row](screenshots/site-panel.png)
 
 ## How it works
 
