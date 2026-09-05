@@ -5,6 +5,12 @@ import { WeatherService } from '../services/weather';
 import { NightStrip } from '../night-strip/night-strip';
 import { DateTime } from 'luxon';
 
+/** Free CARTO basemap key, registered to nocturne.markselvadurai.com. There is no account or
+ *  billing behind it and CARTO offers no rotation or domain enforcement for this tier, so it
+ *  necessarily ships in the client bundle; exposure is limited to tile-quota abuse, which
+ *  would break the basemap and nothing else. */
+const BASEMAP_URL =
+  'https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=cb1_2xh3_1_f6dc083e0556797a1af5af4d';
 
 @Component({
   selector: 'app-map-view',
@@ -81,7 +87,7 @@ export class MapView implements AfterViewInit, OnDestroy {
       zoom: 8,
       center: [43.65, -79.38]
     });
-    const tiles = new L.TileLayer('https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=cb1_2xh3_1_f6dc083e0556797a1af5af4d', {
+    const tiles = new L.TileLayer(BASEMAP_URL, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 20
     })
